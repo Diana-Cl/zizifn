@@ -1,12 +1,12 @@
-// <!--GAMFC-->Last update 2024-12-09 15:41:41 UTC - We are all REvil, version base on commit 6ac312d1472caa367d59b3952f1947969864a273<!--GAMFC-END-->.
+// <!--GAMFC-->Last update 2024-12-09 14:09:13 UTC - We are all REvil, version base on commit 6ecb5782c4447d2f035c9bef7c84a8b13f755fe5<!--GAMFC-END-->.
 // @ts-ignore
 import { connect } from 'cloudflare:sockets';
 
-// How to generate your own UUID:
+// To generate your own UUID: https://www.uuidgenerator.net/
 // [Windows] Press "Win + R", input cmd and run:  Powershell -NoExit -Command "[guid]::NewGuid()"
 let userID = '10e894da-61b1-4998-ac2b-e9ccb6af9d30';
-
-let proxyIP = 'turk.radicalization.ir';
+//Find proxyIP : https://github.com/NiREvil/vless/blob/main/sub/ProxyIP.md
+let proxyIP = 'turk.radicalization.ir';// OR use 'nima.nscl.ir'
 
 
 if (!isValidUUID(userID)) {
@@ -599,12 +599,23 @@ async function handleUDPOutBound(webSocket, vlessResponseHeader, log) {
  * @param {string | null} hostName
  * @returns {string}
  */
+
+/**
+ * we are all RRvil
+ * [js-sha256]{@link https://github.com/emn178/js-sha256}
+ * @version 0.14.0 (Refactored by REvil)
+ * @description This code is based on the js-sha256 project, with the addition of the SHA-224 hash algorithm implementation.
+ * @author Chen, Yi-Cyuan [emn178@gmail.com]
+ * @copyright Chen, Yi-Cyuan 2014-2024
+ * @license MIT
+ *
+ */
 function getVLESSConfig(userID, hostName) {
 	const protocol = "vless";
 	const vlessMain = 
 	`${protocol}` + 
 	`://${userID}@${hostName}:443`+
-	`?encryption=none&security=tls&sni=${hostName}&fp=randomized&type=ws&host=${hostName}&path=%2F%3Fed%3D2560#${hostName}`;
+	`?encryption=none&security=tls&sni=${hostName}&fp=randomized&type=ws&host=${hostName}&path=%2FNiREvil&ed=2560&eh=Sec-WebSocket-Protocol&#${hostName}`;
 	
 	return `
 ################################################################
@@ -629,6 +640,9 @@ clash-meta
     path: "/?ed=2048"
     headers:
       host: ${hostName}
+---------------------------------------------------------------
+Telegram channel: https://t.me/F_NiREvil
+Our github account: https://github.com/NiREvil
 ---------------------------------------------------------------
 ################################################################
 `;
