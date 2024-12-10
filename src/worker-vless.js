@@ -616,7 +616,7 @@ function getVLESSConfig(userID, hostName) {
 	const vlessMain = 
 	`${protocol}` + 
 	`://${userID}@${hostName}:443`+
-	`?encryption=none&security=tls&sni=${hostName}&fp=chrome&type=ws&host=${hostName}&&alpn=h3&path=%2Fassets%2Fimages#${hostName}`;
+	`?encryption=none&security=tls&sni=${hostName}&fp=chrome&type=ws&host=${hostName}&alpn=h3&path=%2Fassets%2Fimages#${hostName}`;
 	
 	return `
 ################################################################
