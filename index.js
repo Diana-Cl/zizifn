@@ -51,10 +51,10 @@ const CONSTANTS = {
 export default {
   async fetch(request, env, ctx) {
     try {
-      const config = createRequestConfig(request, env); // بر اساس URL و ENV
-      if (request.headers.get('Upgrade') !== 'websocket') return handleHttpRequest(request, config); // HTTP End-points
+      const config = createRequestConfig(request, env);
+      if (request.headers.get('Upgrade') !== 'websocket') return handleHttpRequest(request, config);
 
-      return await handleWebSocketRequest(request, config); // WebSocket (VLESS)
+      return await handleWebSocketRequest(request, config);
     } catch (err) {
       return new Response(err?.toString() ?? 'Internal Error', { status: 500 });
     }
@@ -1384,6 +1384,7 @@ async function generateIpSubscription(matchingUserID, host) {
  * @param {function} log - The logging function.
  * @param {object} config - The request configuration object.
  */
+
 async function HandleTCPOutBound(
   remoteSocketWrapper,
   addressType,
@@ -1391,9 +1392,9 @@ async function HandleTCPOutBound(
   portRemote,
   rawClientData,
   webSocket,
-  protocolResponseHeader,
   log,
   config,
+  protocolResponseHeader = null, // optional: default to null if not provided
 ) {
   async function connectAndWrite(address, port, useSocks = false) {
     log(`Attempting to connect to ${address}:${port}` + (useSocks ? ' via SOCKS5' : ''));
@@ -1567,7 +1568,23 @@ function MakeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
   return new ReadableStream({
     start(controller) {
       webSocketServer.addEventListener('message', event => {
-        controller.enqueue(event.data);
+        try {
+          // Normalize incoming data: if it's a string, convert to Uint8Array; if it's Blob use .arrayBuffer()
+          const data = event.data;
+          if (typeof data === 'string') {
+            controller.enqueue(new TextEncoder().encode(data).buffer);
+          } else if (data instanceof ArrayBuffer) {
+            controller.enqueue(data);
+          } else if (data && typeof data.arrayBuffer === 'function') {
+            // e.g., Blob - convert to ArrayBuffer asynchronously
+            data.arrayBuffer().then(buf => controller.enqueue(buf)).catch(err => controller.error(err));
+          } else {
+            // Fallback: enqueue as-is (may still fail later if unexpected)
+            controller.enqueue(data);
+          }
+        } catch (err) {
+          controller.error(err);
+        }
       });
       webSocketServer.addEventListener('close', () => {
         controller.close();
@@ -1670,14 +1687,6 @@ function selectRandomAddress(a) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function stringify(arr, offset = 0) {
-  const uuid = unsafeStringify(arr, offset);
-  if (!isValidUUID(uuid)) {
-    throw new TypeError('Stringified UUID is invalid');
-  }
-  return uuid;
-}
-
 function base64ToArrayBuffer(base64Str) {
   if (!base64Str) {
     return { earlyData: null, error: null };
@@ -1722,7 +1731,7 @@ async function isCloudflare(domain) {
     // This is not foolproof but works for many cases.
     return data?.Authority?.some(auth => auth.data.includes('cloudflare.com'));
   } catch {
-    return false; // If DNS query fails, assume it's not a direct CF domain
+    return false;
   }
 }
 
@@ -1750,7 +1759,7 @@ async function socks5Connect(addressType, addressRemote, portRemote, log, parsed
   const writer = socket.writable.getWriter();
   const reader = socket.readable.getReader();
 
-  await writer.write(new Uint8Array([5, 1, 0])); // Version 5, 1 auth method, No-Auth
+  await writer.write(new Uint8Array([5, 1, 0]));
   let res = (await reader.read()).value;
   if (res[0] !== 0x05 || res[1] !== 0x00) {
     throw new Error('SOCKS5 greeting failed');
