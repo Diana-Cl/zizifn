@@ -23,16 +23,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - name: 🛒 Checkout code
+        uses: actions/checkout@v7
 
-      - name: Install Rust
+      - name: ®️ Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install wasm-pack
+      - name: 🪓 Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
-      - name: Resolve UUID
+      - name: 🗝️ Resolve UUID
         id: uuidval
         env:
           INPUT_UUID: ${{ inputs.uuid }}
@@ -61,7 +61,7 @@ jobs:
           echo "::add-mask::$UUID_VALUE"
           echo "uuid=$UUID_VALUE" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve PROXYIP
+      - name: 📍 Resolve PROXYIP
         id: proxyval
         env:
           INPUT_PROXYIP: ${{ inputs.proxyip }}
@@ -75,18 +75,19 @@ jobs:
             PROXY_VALUE="di.nscl.ir"
           fi
           echo "proxyip=$PROXY_VALUE" >> "$GITHUB_OUTPUT"
-          echo "PROXYIP in use: \`$PROXY_VALUE\`" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Resolve worker name
+      - name: 🏷️ Resolve worker name
         id: worker
         run: |
           DEFAULT_NAME=$(grep -m1 '^name' wrangler.toml | sed -E 's/name[[:space:]]*=[[:space:]]*"(.*)"/\1/')
           NAME="${{ inputs.workername }}"
           if [ -z "$NAME" ]; then NAME="$DEFAULT_NAME"; fi
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
-          echo "### Deploying worker: \`$NAME\`" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: "Deploy via Wrangler Action (${{ steps.worker.outputs.name }})"
+      - name: 🎭 Encode panel
+        run: base64 -w0 index.html > src/panel.b64
+      
+      - name: "⚙️ Deploy via Wrangler Action (${{ steps.worker.outputs.name }})"
         id: deploy
         uses: cloudflare/wrangler-action@v4
         with:
@@ -100,20 +101,24 @@ jobs:
           UUID: ${{ steps.uuidval.outputs.uuid }}
           PROXYIP: ${{ steps.proxyval.outputs.proxyip }}
 
-      - name: Show worker URL
+      - name: 📋 Deployment Summary
         run: |
           BASE_URL="${{ steps.deploy.outputs.deployment-url }}"
           BASE_URL="${BASE_URL%/}"
           {
             echo ""
-            echo "## ✅ Deployment Successful."
             echo ""
-            echo "| | |"
-            echo "|---|----|"
-            echo "| **Worker name** | \`${{ steps.worker.outputs.name }}\` |"
-            echo "| **Base URL** | $BASE_URL |"
             echo ""
-            echo "> [!WARNING]"
+            echo "> [!CAUTION]"
+            echo ">"
+            echo "> | 🟢 | **Deployment Successful** |"
+            echo "> |:-------|:-------|"
+            echo "> | **Worker name** | \`${{ steps.worker.outputs.name }}\` |"
+            echo "> | **PROXYIP** | \`${{ steps.proxyval.outputs.proxyip }}\` |"
+            echo "> | **Base URL** | $BASE_URL |"
+            echo "> "
+            echo ""
+            echo "> [!NOTE]"
             echo ">"
             echo "> 🔒 This repo is public, so the UUID is never printed in these logs."
             echo ">"
@@ -126,5 +131,5 @@ jobs:
             echo ">"
             echo "> Copy your own **UUID**."
             echo ">"
-            echo "> **[🪩 Click here to log in to Cloudflare](https://dash.cloudflare.com/?to=/:account/workers-and-pages)**"
+            echo "> **[💡 Click here to log in to Cloudflare](https://dash.cloudflare.com/?to=/:account/workers-and-pages)**"
           } >> "$GITHUB_STEP_SUMMARY"
